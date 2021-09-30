@@ -115,9 +115,6 @@ def get_courses():
         course for course in courses if course['id'] not in ignored_courses]
 
     for course in filtered_courses:
-        print('course #{} : {}'.format(course['id'], course['name']))
-
-    for course in filtered_courses:
         # get all the good stuff
         get_assignments(course)
         get_quizzes(course)
