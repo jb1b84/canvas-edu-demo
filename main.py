@@ -6,10 +6,13 @@ import os
 import pytz
 import requests
 
+# get your own token in canvas
 token = os.environ.get('TOKEN')
+
 headers = {"Authorization": "Bearer {}".format(token)}
 base_url = 'https://canvas.uw.edu/api/v1/courses'
 
+# university 501, excel for biz etc
 ignored_courses = [873225, 1490894, 1104039]
 
 csvData = []
@@ -25,6 +28,7 @@ def fetch_course_data(course_id, endpoint):
 
 def get_discussions(course):
     topics = fetch_course_data(course['id'], 'discussion_topics')
+    # this is only for console output, could remove
     if topics:
         print('found {} topics'.format(len(topics)))
     else:
@@ -32,6 +36,7 @@ def get_discussions(course):
         return
 
     for topic in topics:
+        # refactor this later but i don't really care right now
         base_due = topic.get('due_at')
         base_unlock = topic.get('unlock_at')
 
@@ -111,11 +116,12 @@ def get_assignments(course):
 def get_courses():
     courses = requests.get(base_url, headers=headers).json()
 
+    # filter out the nonsense courses
     filtered_courses = [
         course for course in courses if course['id'] not in ignored_courses]
 
     for course in filtered_courses:
-        # get all the good stuff
+        # now get all the good stuff
         get_assignments(course)
         get_quizzes(course)
         get_discussions(course)
@@ -139,19 +145,22 @@ def write_csv():
 def prep_dates(base_date):
     if not base_date:
         return '', ''
+
+    # format to print in excel
     fmt = '%Y-%m-%d %H:%M:%S %Z%z'
-    sample = '2021-10-10T06:59:00Z'
+
+    # base date in utc
     utc = datetime.strptime(
         base_date, '%Y-%m-%dT%H:%M:%SZ')
 
     pst = utc.astimezone(pytz.timezone('US/Pacific'))
     cst = utc.astimezone(pytz.timezone('US/Central'))
 
+    # tuple of tz adjusted dates
     return pst.strftime(fmt), cst.strftime(fmt)
 
 
 if __name__ == "__main__":
     get_courses()
-
     write_csv()
     print("...csv created!")
